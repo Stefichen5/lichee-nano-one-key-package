@@ -1,0 +1,7 @@
+*.log
+
+Lichee-Pi-u-boot/*
+Lichee-Pi-linux/*
+buildroot*/*
+toolchain/*
+output/*

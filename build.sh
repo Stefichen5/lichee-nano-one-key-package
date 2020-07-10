@@ -1,10 +1,14 @@
 
 #!/bin/bash
 
-echo "Welcome to use lichee pi one key package"
+echo "Welcome to use lichee pi one key package, modified by Stefan Mayrhofer"
+
+TOOLCHAIN_NAME="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi"
+BUILDROOT_VERSION="buildroot-2020.05"
+
 toolchain_dir="toolchain"
 cross_compiler="arm-linux-gnueabi"
-temp_root_dir=$PWD
+temp_root_dir="$PWD"
 
 #uboot=========================================================
 u_boot_dir="Lichee-Pi-u-boot"
@@ -18,81 +22,94 @@ linux_config_file=""
 #linux opt=========================================================
 
 #linux opt=========================================================
-buildroot_dir="buildroot-2017.08"
+buildroot_dir="buildroot-2020.05"
 buildroot_config_file=""
 #linux opt=========================================================
 
 #pull===================================================================
 pull_uboot(){
-	rm -rf ${temp_root_dir}/${u_boot_dir} &&\
-	mkdir -p ${temp_root_dir}/${u_boot_dir} &&\
-	cd ${temp_root_dir}/${u_boot_dir} &&\
-	git clone -b nano-v2018.01 https://github.com/Lichee-Pi/u-boot.git
-	if [ ! -d ${temp_root_dir}/${u_boot_dir}/u-boot ]; then
-		echo "Error:pull u_boot failed"
-    		exit 0
-	else	
-		mv ${temp_root_dir}/${u_boot_dir}/u-boot/* ${temp_root_dir}/${u_boot_dir}/	
-		rm -rf ${temp_root_dir}/${u_boot_dir}/u-boot	
-		echo "pull buildroot ok"
+	if [ ! -d "${temp_root_dir}/${u_boot_dir}" ] ; then
+		mkdir -p ${temp_root_dir}/${u_boot_dir}
+		cd ${temp_root_dir}/${u_boot_dir}
+		git clone -b nano-v2018.01 https://github.com/Lichee-Pi/u-boot.git
+		if [ ! -d ${temp_root_dir}/${u_boot_dir}/u-boot ]; then
+			echo "Error:pull u_boot failed"
+    			exit 0
+		else	
+			mv ${temp_root_dir}/${u_boot_dir}/u-boot/* ${temp_root_dir}/${u_boot_dir}/	
+			rm -rf ${temp_root_dir}/${u_boot_dir}/u-boot	
+			echo "pull u_boot ok"
+		fi
+	else
+		echo "u_boot was already downloaded. Nothing to do"
 	fi
 }
 pull_linux(){
-	rm -rf ${temp_root_dir}/${linux_dir} &&\
-	mkdir -p ${temp_root_dir}/${linux_dir} &&\
-	cd ${temp_root_dir}/${linux_dir} &&\
-	#git clone --depth=1 -b nano-4.14-exp https://github.com/Lichee-Pi/linux.git
-	git clone -b f1c100s --depth=1 https://github.com/Icenowy/linux.git
-	if [ ! -d ${temp_root_dir}/${linux_dir}/linux ]; then
-		echo "Error:pull linux failed"
-    		exit 0
-	else	
-		mv ${temp_root_dir}/${linux_dir}/linux/* ${temp_root_dir}/${linux_dir}/
-		rm -rf ${temp_root_dir}/${linux_dir}/linux
-		echo "pull buildroot ok"
+	if [ ! -d "${temp_root_dir}/${linux_dir}" ] ; then
+		mkdir -p ${temp_root_dir}/${linux_dir} &&\
+		cd ${temp_root_dir}/${linux_dir} &&\
+		#git clone --depth=1 -b nano-4.14-exp https://github.com/Lichee-Pi/linux.git
+		git clone -b f1c100s --depth=1 https://github.com/Icenowy/linux.git
+		if [ ! -d ${temp_root_dir}/${linux_dir}/linux ]; then
+			echo "Error:pull linux failed"
+	    		exit 0
+		else	
+			mv ${temp_root_dir}/${linux_dir}/linux/* ${temp_root_dir}/${linux_dir}/
+			rm -rf ${temp_root_dir}/${linux_dir}/linux
+			echo "pull linux ok"
+		fi
+	else
+		echo "Linux was already downloaded. Nothing to do."
 	fi
 }
 pull_toolchain(){
-	rm -rf ${temp_root_dir}/${toolchain_dir}
-	mkdir -p ${temp_root_dir}/${toolchain_dir}
-	cd ${temp_root_dir}/${toolchain_dir}
-	ldconfig
-	if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] ; then
-		wget http://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabi/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi.tar.xz &&\
-		tar xvJf gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi.tar.xz
-		if [ ! -d ${temp_root_dir}/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi ]; then
+	if [ ! -d ${temp_root_dir}/${toolchain_dir}/${TOOLCHAIN_NAME} ] ; then
+		mkdir -p ${temp_root_dir}/${toolchain_dir}
+		cd ${temp_root_dir}/${toolchain_dir}
+		ldconfig
+		
+		if [ ! -f "${TOOLCHAIN_NAME}.xz" ] ; then
+			wget http://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabi/${TOOLCHAIN_NAME}.tar.xz
+		fi
+
+		tar xvJf ${TOOLCHAIN_NAME}.tar.xz
+		if [ ! -d ${temp_root_dir}/${toolchain_dir}/${TOOLCHAIN_NAME} ]; then
 			echo "Error:pull toolchain failed"
 	    		exit 0
 		else			
-			echo "pull buildroot ok"
+			echo "pull toolchain ok"
 		fi
 	else
-	 	wget http://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabi/gcc-linaro-7.4.1-2019.02-i686_arm-linux-gnueabi.tar.xz &&\
-		tar xvJf gcc-linaro-7.4.1-2019.02-i686_arm-linux-gnueabi.tar.xz
-		if [ ! -d ${temp_root_dir}/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-i686_arm-linux-gnueabi ]; then
-			echo "Error:pull toolchain failed"
-	    		exit 0
-		else			
-			echo "pull buildroot ok"
-		fi
+		echo "toolchain already downloaded. Nothing to do."
 	fi
 }
 pull_buildroot(){
-	rm -rf ${temp_root_dir}/${buildroot_dir}
-	mkdir -p ${temp_root_dir}/${buildroot_dir}
-	cd ${temp_root_dir}/${buildroot_dir}  &&\
-	wget https://buildroot.org/downloads/buildroot-2017.08.tar.gz &&\
-	tar xvf buildroot-2017.08.tar.gz
-	if [ ! -d ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08 ]; then
-		echo "Error:pull buildroot failed"
-    		exit 0
-	else			
-		# mv ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/* ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08
-		# rm -rf ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08
-		echo "pull buildroot ok"
+	#rm -rf ${temp_root_dir}/${buildroot_dir}
+	if [ ! -d "${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}" ] ; then
+		mkdir -p ${temp_root_dir}/${buildroot_dir}
+		cd ${temp_root_dir}/${buildroot_dir}  &&\
+		
+		if [ ! -f "${BUILDROOT_VERSION}.tar.gz" ] ; then
+			wget https://buildroot.org/downloads/${BUILDROOT_VERSION}.tar.gz
+		fi
+	
+		tar xvf ${BUILDROOT_VERSION}.tar.gz > /dev/null
+		if [ ! -d ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION} ]; then
+			echo "Error:pull buildroot failed"
+    			exit 0
+		else
+			echo "pull buildroot ok"
+		fi
+	else
+		echo "buildroot already downloaded. Nothing to do."
 	fi
 }
 pull_all(){
+	rm -rf ${temp_root_dir}/${buildroot_dir}
+	rm -rf ${temp_root_dir}/${linux_dir}
+	rm -rf ${temp_root_dir}/${u_boot_dir}
+	rm -rf ${temp_root_dir}/${toolchain_dir}
+
         sudo apt-get update
 	sudo apt-get install -y autoconf automake libtool gettext 
         sudo apt-get install -y make gcc g++ swig python-dev bc python u-boot-tools bison flex bc libssl-dev libncurses5-dev unzip mtd-utils
@@ -102,7 +119,7 @@ pull_all(){
 	pull_linux
 	pull_toolchain
 	pull_buildroot
-	cp -f ${temp_root_dir}/buildroot.config ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08
+	cp -f ${temp_root_dir}/buildroot.config ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}
 	cp -f ${temp_root_dir}/linux-licheepi_nano_defconfig ${temp_root_dir}/${linux_dir}/arch/arm/configs/licheepi_nano_defconfig
 	cp -f ${temp_root_dir}/linux-licheepi_nano_spiflash_defconfig ${temp_root_dir}/${linux_dir}/arch/arm/configs/licheepi_nano_spiflash_defconfig
 	cp -f ${temp_root_dir}/linux-suniv-f1c100s-licheepi-nano-with-lcd.dts ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/suniv-f1c100s-licheepi-nano-with-lcd.dts
@@ -115,35 +132,41 @@ pull_all(){
 
 #env===================================================================
 update_env(){
-	if [ ! -d ${temp_root_dir}/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-i686_arm-linux-gnueabi ]; then
-		if [ ! -d ${temp_root_dir}/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi ]; then
-			echo "Error:toolchain no found,Please use ./buid.sh pull_all "
-	    		exit 0
-		else			
-			export PATH="$PWD/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi/bin":"$PATH"
-		fi
-	else
-		export PATH="$PWD/${toolchain_dir}/gcc-linaro-7.4.1-2019.02-i686_arm-linux-gnueabi/bin":"$PATH"
+	if [ ! -d ${temp_root_dir}/${toolchain_dir}/${TOOLCHAIN_NAME} ]; then
+		echo "Error:toolchain no found,Please use ./buid.sh pull_all "
+    		exit 0
+	else			
+		export PATH="$PWD/${toolchain_dir}/${TOOLCHAIN_NAME}/bin":"$PATH"
 	fi
-	
 }
 check_env(){
-	if [ ! -d ${temp_root_dir}/${toolchain_dir} ] ||\
-	 [ ! -d ${temp_root_dir}/${u_boot_dir} ] ||\
-	 [ ! -d ${temp_root_dir}/${buildroot_dir} ] ||\
-	 [ ! -d ${temp_root_dir}/${linux_dir} ]; then
-		echo "Error:env error,Please use ./buid.sh pull_all"
-		exit 0
+	if [ ! -d "${temp_root_dir}/${toolchain_dir}" ] ; then
+		pull_toolchain
+	fi
+
+	if [ ! -d "${temp_root_dir}/${u_boot_dir}" ] ; then
+		pull_uboot
+	fi
+
+	if [ ! -d "${temp_root_dir}/${buildroot_dir}" ] ; then
+		pull_buildroot
+	fi
+
+	if [ ! -d "${temp_root_dir}/${linux_dir}" ] ; then
+		pull_linux
 	fi
 }
 #env===================================================================
 
 #clean===================================================================
 clean_log(){
+	echo "removing logs"
 	rm -f ${temp_root_dir}/*.log
 }
 
 clean_all(){
+	echo "start cleaning local files..."
+
 	clean_log
 	clean_uboot
 	clean_linux
@@ -155,6 +178,8 @@ clean_all(){
 #uboot=========================================================
 
 clean_uboot(){
+	echo "remove uboot files"
+
 	cd ${temp_root_dir}/${u_boot_dir}
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- mrproper > /dev/null 2>&1
 }
@@ -199,6 +224,8 @@ build_uboot(){
 #linux=========================================================
 
 clean_linux(){
+	echo "clean linux files"
+
 	cd ${temp_root_dir}/${linux_dir}
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- mrproper > /dev/null 2>&1
 }
@@ -242,28 +269,30 @@ build_linux(){
 #linux=========================================================
 
 clean_buildroot(){
+	echo "clean buildroot files"
+
 	cd ${temp_root_dir}/${buildroot_dir}
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- clean > /dev/null 2>&1
 }
 
 
 build_buildroot(){
-	cd ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08
+	cd ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}
 	echo "Building buildroot ..."
     	echo "--->Configuring ..."
-	rm ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/.config
+	rm ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/.config
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- defconfig
-	cp -f ${temp_root_dir}/buildroot.config ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/.config
-	make ARCH=arm CROSS_COMPILE=${cross_compiler}- ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/.config
+	cp -f ${temp_root_dir}/buildroot.config ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/.config
+	make ARCH=arm CROSS_COMPILE=${cross_compiler}- ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/.config
 	# make ARCH=arm CROSS_COMPILE=${cross_compiler}- ${buildroot_config_file} > /dev/null 2>&1
-	if [ $? -ne 0 ] || [ ! -f ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/.config ]; then
+	if [ $? -ne 0 ] || [ ! -f ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/.config ]; then
 		echo "Error: .config file not exist"
 		exit 1
 	fi
 	echo "--->Compiling ..."
   	make ARCH=arm CROSS_COMPILE=${cross_compiler}- > ${temp_root_dir}/build_buildroot.log 2>&1
 
-	if [ $? -ne 0 ] || [ ! -d ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/output/target ]; then
+	if [ $? -ne 0 ] || [ ! -d ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/output/target ]; then
         	echo "Error: BUILDROOT NOT BUILD.Please Get Some Error From build_buildroot.log"
         	exit 1
 	fi
@@ -283,8 +312,8 @@ copy_linux(){
 	
 }
 copy_buildroot(){
-	cp -r ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/output/target ${temp_root_dir}/output/rootfs/
-	cp ${temp_root_dir}/${buildroot_dir}/buildroot-2017.08/output/images/rootfs.tar ${temp_root_dir}/output/
+	cp -r ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/output/target ${temp_root_dir}/output/rootfs/
+	cp ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}/output/images/rootfs.tar ${temp_root_dir}/output/
 	gzip -c ${temp_root_dir}/output/rootfs.tar > ${temp_root_dir}/output/rootfs.tar.gz
 }
 #copy=========================================================
@@ -446,52 +475,73 @@ build(){
 	
 	
 }
-if [ "${1}" = "" ] && [ ! "${1}" = "nano_spiflash" ] && [ ! "${1}" = "nano_tf" ] && [ ! "${1}" = "pull_all" ]; then
-	echo "Usage: build.sh [nano_spiflash | nano_tf | pull_all | clean]"；
-	echo "One key build nano finware";
-	echo " ";
-	echo "nano_spiflash    Build nano firmware booted from spiflash";
-	echo "nano_tf          Build nano firmware booted from tf";
-	echo "pull_all         Pull build env from internet";
-	echo "clean            Clean build env";
-    exit 0
-fi
-if [ ! -f ${temp_root_dir}/build.sh ]; then
-	echo "Error:Please enter packge root dir"
-    	exit 0
-fi
 
-if [ "${1}" = "clean" ]; then
-	clean_all
-	echo "clean ok"
-	exit 0
-fi
-if [ "${1}" = "pull_all" ]; then
-	pull_all
-fi
-if [ "${1}" = "pull_buildroot" ]; then
-	pull_buildroot
-fi
-if [ "${1}" = "nano_spiflash" ]; then
+#build==========================================================
+build_spiflash()
+{
 	echo "build rootfs maybe have some buf in this mode"
 	linux_config_file="licheepi_nano_spiflash_defconfig"
 	u_boot_config_file="licheepi_nano_spiflash_defconfig"
 	build
 	pack_spiflash_normal_size_img
 	echo "the binary file in output/spiflash-bin dir"
-fi
-if [ "${1}" = "build_buildroot" ]; then
-	build_buildroot
-fi
-if [ "${1}" = "nano_tf" ]; then
+}
+
+build_sdcard()
+{
 	linux_config_file="licheepi_nano_defconfig"
 	u_boot_config_file="licheepi_nano_defconfig"
 	u_boot_boot_cmd_file="tf_boot.cmd"
 	build
 	pack_tf_normal_size_img
 	echo "the image file in output/image dir"
+}
+#build==========================================================
+
+print_help()
+{
+	echo "Usage: build.sh -m [nano_spiflash | nano_tf | pull_all | clean]"；
+	echo "One key build nano firmware";
+	echo " ";
+	echo "nano_spiflash    Build nano firmware booted from spiflash";
+	echo "nano_tf          Build nano firmware booted from tf";
+	echo "pull_all         Pull build env from internet";
+	echo "clean            Clean build env";
+    exit 0	
+}
+
+MODE=""
+
+if [ ! -f ${temp_root_dir}/build.sh ]; then
+	echo "Error:Please enter packge root dir"
+    	exit 0
 fi
 
-sleep 1
-echo "build ok"
+#Argument parsing
+while getopts "m:" opt
+do
+	case $opt in
+		m) MODE="$OPTARG"
+			;;
+	esac
+done
 
+case $MODE in
+	nano_spiflash) build_spiflash
+		;;
+	nano_tf) build_sdcard
+		;;
+	pull_all) pull_all
+		;;
+	pull_buildroot) pull_buildroot
+		;;
+	build_buildroot) build_buildroot
+		;;
+	clean) clean_all
+		;;
+	*) print_help
+		exit
+		;;
+esac
+
+echo "done"
