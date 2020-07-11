@@ -6,6 +6,9 @@ echo "Welcome to use lichee pi one key package, modified by Stefan Mayrhofer"
 TOOLCHAIN_NAME="gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabi"
 BUILDROOT_VERSION="buildroot-2020.05"
 
+MODE=""
+BUILD_PART=""
+
 toolchain_dir="toolchain"
 cross_compiler="arm-linux-gnueabi"
 temp_root_dir="$PWD"
@@ -485,9 +488,28 @@ build_spiflash()
 	echo "build rootfs maybe have some buf in this mode"
 	linux_config_file="licheepi_nano_spiflash_defconfig"
 	u_boot_config_file="licheepi_nano_spiflash_defconfig"
-	build
-	pack_spiflash_normal_size_img
-	echo "the binary file in output/spiflash-bin dir"
+
+	if [ $BUILD_PART == "" ] ; then	
+		build
+		pack_spiflash_normal_size_img
+		echo "the binary file in output/spiflash-bin dir"
+	fi
+	
+	check_env
+	update_env
+
+	if [ $BUILD_PART == "u_boot" ] ; then
+		build_uboot
+		copy_uboot
+	elif [ $BUILD_PART == "kernel" ] ; then
+		build_linux
+		copy_linux
+	elif [ $BUILD_PART == "buildroot" ] ; then
+		build_buildroot
+		copy_buildroot
+	elif [ $BUILD_PART == "create_image" ] ; then
+		pack_spiflash_normal_size_img
+	fi
 }
 
 build_sdcard()
@@ -495,25 +517,44 @@ build_sdcard()
 	linux_config_file="licheepi_nano_defconfig"
 	u_boot_config_file="licheepi_nano_defconfig"
 	u_boot_boot_cmd_file="tf_boot.cmd"
-	build
-	pack_tf_normal_size_img
-	echo "the image file in output/image dir"
+
+	if [ $BUILD_PART == "" ] ; then
+		build
+		pack_tf_normal_size_img
+		echo "the image file in output/image dir"
+	fi
+
+	if [ $BUILD_PART == "u_boot" ] ; then
+		build_uboot
+		copy_uboot
+	elif [ $BUILD_PART == "kernel" ] ; then
+		build_linux
+		copy_linux
+	elif [ $BUILD_PART == "buildroot" ] ; then
+		build_buildroot
+		copy_buildroot
+	elif [ $BUILD_PART == "create_image" ] ; then
+		pack_spiflash_normal_size_img
+	fi
 }
 #build==========================================================
 
 print_help()
 {
-	echo "Usage: build.sh -m [nano_spiflash | nano_tf | pull_all | clean]"；
+	echo "Usage: build.sh -m [nano_spiflash | nano_tf | pull_all | clean] -p [ u_boot | kernel | buildroot | create_image ]"；
 	echo "One key build nano firmware";
 	echo " ";
 	echo "nano_spiflash    Build nano firmware booted from spiflash";
 	echo "nano_tf          Build nano firmware booted from tf";
 	echo "pull_all         Pull build env from internet";
 	echo "clean            Clean build env";
-    exit 0	
+	echo ""
+	echo "u_boot           Build only u_boot"
+	echo "kernel           Build only kernel"
+    echo "buildroot        Build onyl buildroot"
+	echo "cerate_image     Create image file from built parts"
+	exit 0	
 }
-
-MODE=""
 
 if [ ! -f ${temp_root_dir}/build.sh ]; then
 	echo "Error:Please enter packge root dir"
@@ -521,10 +562,12 @@ if [ ! -f ${temp_root_dir}/build.sh ]; then
 fi
 
 #Argument parsing
-while getopts "m:" opt
+while getopts "m:p:" opt
 do
 	case $opt in
 		m) MODE="$OPTARG"
+			;;
+		p) BUILD_PART="$OPTARG"
 			;;
 	esac
 done
