@@ -19,9 +19,11 @@ u_boot_boot_cmd_file=""
 #linux opt=========================================================
 linux_dir="Lichee-Pi-linux"
 linux_config_file=""
+DTS_NAME="suniv-f1c100s-licheepi-nano.dts"
+DTB_NAME="suniv-f1c100s-licheepi-nano.dtb"
 #linux opt=========================================================
 
-#linux opt=========================================================
+#buildroot opt=========================================================
 buildroot_dir="buildroot-2020.05"
 buildroot_config_file=""
 #linux opt=========================================================
@@ -48,8 +50,8 @@ pull_linux(){
 	if [ ! -d "${temp_root_dir}/${linux_dir}" ] ; then
 		mkdir -p ${temp_root_dir}/${linux_dir} &&\
 		cd ${temp_root_dir}/${linux_dir} &&\
-		#git clone --depth=1 -b nano-4.14-exp https://github.com/Lichee-Pi/linux.git
-		git clone -b f1c100s --depth=1 https://github.com/Icenowy/linux.git
+		git clone --depth=1 -b nano-5.2-tf https://github.com/Lichee-Pi/linux.git
+		#git clone -b f1c100s --depth=1 https://github.com/Icenowy/linux.git
 		if [ ! -d ${temp_root_dir}/${linux_dir}/linux ]; then
 			echo "Error:pull linux failed"
 	    		exit 0
@@ -122,7 +124,7 @@ pull_all(){
 	cp -f ${temp_root_dir}/buildroot.config ${temp_root_dir}/${buildroot_dir}/${BUILDROOT_VERSION}
 	cp -f ${temp_root_dir}/linux-licheepi_nano_defconfig ${temp_root_dir}/${linux_dir}/arch/arm/configs/licheepi_nano_defconfig
 	cp -f ${temp_root_dir}/linux-licheepi_nano_spiflash_defconfig ${temp_root_dir}/${linux_dir}/arch/arm/configs/licheepi_nano_spiflash_defconfig
-	cp -f ${temp_root_dir}/linux-suniv-f1c100s-licheepi-nano-with-lcd.dts ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/suniv-f1c100s-licheepi-nano-with-lcd.dts
+	cp -f ${temp_root_dir}/${DTS_NAME} ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/${DTS_NAME}
 	cp -f ${temp_root_dir}/uboot-licheepi_nano_defconfig ${temp_root_dir}/${u_boot_dir}/configs/licheepi_nano_defconfig
 	cp -f ${temp_root_dir}/uboot-licheepi_nano_spiflash_defconfig ${temp_root_dir}/${u_boot_dir}/configs/licheepi_nano_spiflash_defconfig
 	mkdir -p ${temp_root_dir}/output
@@ -190,7 +192,7 @@ build_uboot(){
 	echo "Building uboot ..."
     	echo "--->Configuring ..."
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- ${u_boot_config_file} > /dev/null 2>&1
-        # cp -f ${temp_root_dir}/${u_boot_config_file} ${temp_root_dir}/${u_boot_dir}/.config
+	#cp -f ${temp_root_dir}/${u_boot_config_file} ${temp_root_dir}/${u_boot_dir}/.config
 	if [ $? -ne 0 ] || [ ! -f ${temp_root_dir}/${u_boot_dir}/.config ]; then
 		echo "Error: .config file not exist"
 		exit 1
@@ -234,7 +236,8 @@ clean_linux(){
 build_linux(){
 	cd ${temp_root_dir}/${linux_dir}
 	echo "Building linux ..."
-    	echo "--->Configuring ..."
+    echo "--->Configuring ..."
+
 	make ARCH=arm CROSS_COMPILE=${cross_compiler}- ${linux_config_file} > /dev/null 2>&1
 	if [ $? -ne 0 ] || [ ! -f ${temp_root_dir}/${linux_dir}/.config ]; then
 		echo "Error: .config file not exist"
@@ -254,8 +257,8 @@ build_linux(){
         	exit 1
 	fi
 
-	if [ ! -f ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/suniv-f1c100s-licheepi-nano-with-lcd.dtb ]; then
-        	echo "Error: UBOOT NOT BUILD.${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/suniv-f1c100s-licheepi-nano-with-lcd.dtb not found"
+	if [ ! -f ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/${DTB_NAME} ]; then
+        	echo "Error: UBOOT NOT BUILD.${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/${DTB_NAME} not found"
         	exit 1
 	fi
 	#build linux kernel modules
@@ -266,7 +269,7 @@ build_linux(){
 }
 #linux=========================================================
 
-#linux=========================================================
+#buildroot=========================================================
 
 clean_buildroot(){
 	echo "clean buildroot files"
@@ -298,7 +301,7 @@ build_buildroot(){
 	fi
 	echo "Build buildroot ok"
 }
-#linux=========================================================
+#buildroot=========================================================
 
 #copy=========================================================
 copy_uboot(){
@@ -306,7 +309,7 @@ copy_uboot(){
 }
 copy_linux(){
 	cp ${temp_root_dir}/${linux_dir}/arch/arm/boot/zImage ${temp_root_dir}/output/
-	cp ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/suniv-f1c100s-licheepi-nano-with-lcd.dtb ${temp_root_dir}/output/
+	cp ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts/${DTB_NAME} ${temp_root_dir}/output/
 	mkdir -p ${temp_root_dir}/output/modules/
 	cp -rf ${temp_root_dir}/${linux_dir}/mod_output/lib ${temp_root_dir}/output/modules/
 	
@@ -326,7 +329,7 @@ pack_spiflash_normal_size_img(){
 	echo "--->Packing Uboot..."
 	_UBOOT_FILE=${temp_root_dir}/output/u-boot-sunxi-with-spl.bin
 	dd if=$_UBOOT_FILE of=${temp_root_dir}/output/spiflash-bin/lichee-nano-normal-size.bin bs=1K conv=notrunc
-	_DTB_FILE=${temp_root_dir}/output/suniv-f1c100s-licheepi-nano-with-lcd.dtb
+	_DTB_FILE=${temp_root_dir}/output/${DTB_NAME}
 	echo "--->Packing dtb..."
 	dd if=$_DTB_FILE of=${temp_root_dir}/output/spiflash-bin/lichee-nano-normal-size.bin bs=1K seek=1024  conv=notrunc
 	echo "--->Packing zImage..."
@@ -419,7 +422,7 @@ EOT
 
 	#pack linux kernel
 	_KERNEL_FILE=${temp_root_dir}/output/zImage
-	_DTB_FILE=${temp_root_dir}/output/suniv-f1c100s-licheepi-nano-with-lcd.dtb
+	_DTB_FILE=${temp_root_dir}/output/${DTB_NAME}
 	sudo cp $_KERNEL_FILE ${temp_root_dir}/output/p1/zImage &&\
         sudo cp $_DTB_FILE ${temp_root_dir}/output/p1/ &&\
         sudo cp ${temp_root_dir}/output/boot.scr ${temp_root_dir}/output/p1/ &&\
