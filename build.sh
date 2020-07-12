@@ -489,7 +489,7 @@ build_spiflash()
 	linux_config_file="licheepi_nano_spiflash_defconfig"
 	u_boot_config_file="licheepi_nano_spiflash_defconfig"
 
-	if [ $BUILD_PART == "" ] ; then	
+	if [ "$BUILD_PART" == "" ] ; then	
 		build
 		pack_spiflash_normal_size_img
 		echo "the binary file in output/spiflash-bin dir"
@@ -498,16 +498,16 @@ build_spiflash()
 	check_env
 	update_env
 
-	if [ $BUILD_PART == "u_boot" ] ; then
+	if [ "$BUILD_PART" == "u_boot" ] ; then
 		build_uboot
 		copy_uboot
-	elif [ $BUILD_PART == "kernel" ] ; then
+	elif [ "$BUILD_PART" == "kernel" ] ; then
 		build_linux
 		copy_linux
-	elif [ $BUILD_PART == "buildroot" ] ; then
+	elif [ "$BUILD_PART" == "buildroot" ] ; then
 		build_buildroot
 		copy_buildroot
-	elif [ $BUILD_PART == "create_image" ] ; then
+	elif [ "$BUILD_PART" == "create_image" ] ; then
 		pack_spiflash_normal_size_img
 	fi
 }
@@ -518,22 +518,22 @@ build_sdcard()
 	u_boot_config_file="licheepi_nano_defconfig"
 	u_boot_boot_cmd_file="tf_boot.cmd"
 
-	if [ $BUILD_PART == "" ] ; then
+	if [ "$BUILD_PART" == "" ] ; then
 		build
 		pack_tf_normal_size_img
 		echo "the image file in output/image dir"
 	fi
 
-	if [ $BUILD_PART == "u_boot" ] ; then
+	if [ "$BUILD_PART" == "u_boot" ] ; then
 		build_uboot
 		copy_uboot
-	elif [ $BUILD_PART == "kernel" ] ; then
+	elif [ "$BUILD_PART" == "kernel" ] ; then
 		build_linux
 		copy_linux
-	elif [ $BUILD_PART == "buildroot" ] ; then
+	elif [ "$BUILD_PART" == "buildroot" ] ; then
 		build_buildroot
 		copy_buildroot
-	elif [ $BUILD_PART == "create_image" ] ; then
+	elif [ "$BUILD_PART" == "create_image" ] ; then
 		pack_spiflash_normal_size_img
 	fi
 }
