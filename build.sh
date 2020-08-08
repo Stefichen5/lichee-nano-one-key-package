@@ -53,7 +53,8 @@ pull_linux(){
 	if [ ! -d "${temp_root_dir}/${linux_dir}" ] ; then
 		mkdir -p ${temp_root_dir}/${linux_dir} &&\
 		cd ${temp_root_dir}/${linux_dir} &&\
-		git clone --depth=1 -b nano-5.2-tf https://github.com/Lichee-Pi/linux.git
+		git clone --depth 1 --branch v5.8 https://github.com/torvalds/linux.git
+		#git clone --depth=1 -b nano-5.2-tf https://github.com/Lichee-Pi/linux.git
 		#git clone -b f1c100s --depth=1 https://github.com/Icenowy/linux.git
 		if [ ! -d ${temp_root_dir}/${linux_dir}/linux ]; then
 			echo "Error:pull linux failed"
@@ -237,6 +238,13 @@ clean_linux(){
 
 
 build_linux(){
+	mkdir -p ${temp_root_dir}/${linux_dir}/arch/arm/configs
+	mkdir -p ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
+
+	cp ${temp_root_dir}/${linux_config_file} ${temp_root_dir}/${linux_dir}/arch/arm/configs/
+	cp ${temp_root_dir}/suniv-f1c100s.dtsi ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
+	cp ${temp_root_dir}/${DTS_NAME} ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
+
 	cd ${temp_root_dir}/${linux_dir}
 	echo "Building linux ..."
     echo "--->Configuring ..."
