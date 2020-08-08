@@ -241,6 +241,7 @@ build_linux(){
 	mkdir -p ${temp_root_dir}/${linux_dir}/arch/arm/configs
 	mkdir -p ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
 
+	#currently, the mainstream linux files are not complete and can not be used directly. We just use our files
 	cp ${temp_root_dir}/${linux_config_file} ${temp_root_dir}/${linux_dir}/arch/arm/configs/
 	cp ${temp_root_dir}/suniv-f1c100s.dtsi ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
 	cp ${temp_root_dir}/${DTS_NAME} ${temp_root_dir}/${linux_dir}/arch/arm/boot/dts
