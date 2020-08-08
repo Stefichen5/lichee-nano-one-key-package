@@ -58,13 +58,6 @@
 		pinctrl-name = "default";
 		pinctrl-0 = <&spi1_pins>, <&spi1_cs_pin>;
 	};
-
-	onewire_device {
-		compatible = "w1-gpio";
-		gpios = <&pio 4 3 GPIO_ACTIVE_HIGH | GPIO_PULL_UP>;
-		pinctrl-names = "default";
-		//pinctrl-0 = <&my_onewire>;
-	};
 };
 
 &be0 {
@@ -102,11 +95,6 @@
 };
 
 &pio {
-	my_onewire: my_w1_pin@0 {
-		pins = "PE3";
-		function = "gpio_in";
-	};
-
 	spi1_pins: spi1@0 {
 		pins = "PA1", "PA2", "PA3";
 		function = "spi1";
